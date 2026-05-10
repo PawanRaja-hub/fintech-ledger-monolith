@@ -1,0 +1,56 @@
+{
+  "info": {
+    "name": "Fintech Ledger Monolith",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login Admin",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": "http://localhost:8081/api/auth/login",
+        "body": {"mode": "raw", "raw": "{\n  \"email\": \"admin@demo.local\",\n  \"password\": \"Password@123\"\n}"}
+      }
+    },
+    {
+      "name": "Login Alice",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": "http://localhost:8081/api/auth/login",
+        "body": {"mode": "raw", "raw": "{\n  \"email\": \"alice@demo.local\",\n  \"password\": \"Password@123\"\n}"}
+      }
+    },
+    {
+      "name": "My Wallet",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "http://localhost:8081/api/wallets/me"}
+    },
+    {
+      "name": "Fund Wallet",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Authorization", "value": "Bearer {{adminToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+        "url": "http://localhost:8081/api/admin/wallets/fund",
+        "body": {"mode": "raw", "raw": "{\n  \"walletId\": 1,\n  \"amount\": 5000.00\n}"}
+      }
+    },
+    {
+      "name": "Transfer",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Idempotency-Key", "value": "demo-transfer-001"}, {"key": "Content-Type", "value": "application/json"}],
+        "url": "http://localhost:8081/api/payments/transfers",
+        "body": {"mode": "raw", "raw": "{\n  \"toWalletId\": 2,\n  \"amount\": 125.50,\n  \"memo\": \"Dinner settlement\"\n}"}
+      }
+    },
+    {
+      "name": "Pending Reviews",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{adminToken}}"}], "url": "http://localhost:8081/api/admin/reviews"}
+    },
+    {
+      "name": "Reconciliation",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{adminToken}}"}], "url": "http://localhost:8081/api/admin/reconciliation"}
+    }
+  ]
+}
