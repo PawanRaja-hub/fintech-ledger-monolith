@@ -15,4 +15,9 @@ public class WalletController {
     public ApiResponse<WalletResponse> me(Authentication authentication) {
         return ApiResponse.ok("Wallet loaded", walletService.myWallet(authentication.getName()));
     }
+
+    @GetMapping("/recipients")
+    public ApiResponse<java.util.List<WalletResponse>> recipients() {
+        return ApiResponse.ok("Transfer recipients loaded", walletService.allWallets());
+    }
 }

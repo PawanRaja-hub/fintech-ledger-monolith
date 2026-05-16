@@ -6,9 +6,12 @@ import com.portfolio.fintech.payment.PaymentService;
 import com.portfolio.fintech.payment.PaymentTransactionRepository;
 import com.portfolio.fintech.payment.dto.FundWalletRequest;
 import com.portfolio.fintech.payment.dto.PaymentResponse;
+import com.portfolio.fintech.wallet.WalletRepository;
+import com.portfolio.fintech.wallet.dto.WalletResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,9 +21,20 @@ import java.util.List;
 public class AdminController {
     private final PaymentService paymentService;
     private final PaymentTransactionRepository transactions;
+    private final WalletRepository wallets;
 
-    public AdminController(PaymentService paymentService, PaymentTransactionRepository transactions) {
-        this.paymentService = paymentService; this.transactions = transactions;
+    public AdminController(PaymentService paymentService, PaymentTransactionRepository transactions, WalletRepository wallets) {
+        this.paymentService = paymentService; this.transactions = transactions; this.wallets = wallets;
+    }
+
+    @GetMapping("/wallets")
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST')")
+    @Transactional(readOnly = true)
+    public ApiResponse<List<WalletResponse>> wallets() {
+        var rows = wallets.findAll().stream()
+                .map(wallet -> new WalletResponse(wallet.getId(), wallet.getUser().getEmail(), wallet.getAvailableBalance(), wallet.getVersion()))
+                .toList();
+        return ApiResponse.ok("Wallets loaded", rows);
     }
 
     @PostMapping("/wallets/fund")

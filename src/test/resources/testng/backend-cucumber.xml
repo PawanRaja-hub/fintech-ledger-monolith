@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Backend Cucumber Automation">
+    <test name="Backend API scenarios">
+        <classes>
+            <class name="com.portfolio.fintech.automation.BackendCucumberTestNgTest"/>
+        </classes>
+    </test>
+</suite>

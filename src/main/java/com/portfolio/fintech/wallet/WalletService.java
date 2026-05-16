@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 public class WalletService {
@@ -24,6 +25,13 @@ public class WalletService {
     public WalletResponse myWallet(String email) {
         var wallet = wallets.findByUserEmail(email).orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Wallet not found"));
         return new WalletResponse(wallet.getId(), wallet.getUser().getEmail(), wallet.getAvailableBalance(), wallet.getVersion());
+    }
+
+    @Transactional(readOnly = true)
+    public List<WalletResponse> allWallets() {
+        return wallets.findAll().stream()
+                .map(wallet -> new WalletResponse(wallet.getId(), wallet.getUser().getEmail(), wallet.getAvailableBalance(), wallet.getVersion()))
+                .toList();
     }
 
     @Transactional

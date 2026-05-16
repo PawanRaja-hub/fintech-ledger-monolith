@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fintech Ledger Console</title>
+    <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<main class="shell">
+    <section class="hero" aria-labelledby="app-title">
+        <div>
+            <p class="eyebrow">Ledger operations console</p>
+            <h1 id="app-title">Fintech Ledger</h1>
+            <p class="lede">Run wallet funding, customer transfers, fraud review, and reconciliation from one secured workspace.</p>
+        </div>
+        <form id="login-form" class="login-panel">
+            <label for="demo-user">Demo identity</label>
+            <div class="login-row">
+                <select id="demo-user" name="email">
+                    <option value="admin@demo.local">Platform Admin</option>
+                    <option value="analyst@demo.local">Fraud Analyst</option>
+                    <option value="alice@demo.local">Alice Customer</option>
+                    <option value="bob@demo.local">Bob Customer</option>
+                </select>
+                <button type="submit">Sign in</button>
+            </div>
+            <p id="session-label" class="session-label">Not signed in</p>
+        </form>
+    </section>
+
+    <section class="metrics" aria-label="Account metrics">
+        <article>
+            <span>Wallet balance</span>
+            <strong id="balance-value">$0.00</strong>
+        </article>
+        <article>
+            <span>Wallet ID</span>
+            <strong id="wallet-id">-</strong>
+        </article>
+        <article>
+            <span>Pending reviews</span>
+            <strong id="review-count">-</strong>
+        </article>
+        <article>
+            <span>Ledger match</span>
+            <strong id="match-rate">-</strong>
+        </article>
+    </section>
+
+    <nav class="tabs" aria-label="Workspace views">
+        <button class="tab is-active" type="button" data-panel="transfer-panel">Transfer</button>
+        <button class="tab" type="button" data-panel="admin-panel">Admin</button>
+        <button class="tab" type="button" data-panel="review-panel">Review</button>
+        <button class="tab" type="button" data-panel="reconcile-panel">Reconcile</button>
+    </nav>
+
+    <section class="workspace">
+        <div id="transfer-panel" class="panel is-active">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Customer workflow</p>
+                    <h2>Send a wallet transfer</h2>
+                </div>
+                <button id="refresh-wallet" class="ghost" type="button">Refresh</button>
+            </div>
+            <form id="transfer-form" class="form-grid">
+                <label>Destination wallet
+                    <select id="to-wallet" required></select>
+                </label>
+                <label>Amount
+                    <input id="transfer-amount" type="number" min="0.01" step="0.01" value="125.50" required>
+                </label>
+                <label class="wide">Memo
+                    <input id="transfer-memo" maxlength="120" value="Dinner settlement">
+                </label>
+                <button type="submit">Submit transfer</button>
+            </form>
+            <div id="transfer-result" class="result" role="status"></div>
+        </div>
+
+        <div id="admin-panel" class="panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Treasury workflow</p>
+                    <h2>Fund a wallet</h2>
+                </div>
+                <button id="refresh-wallets" class="ghost" type="button">Load wallets</button>
+            </div>
+            <form id="fund-form" class="form-grid">
+                <label>Wallet
+                    <select id="fund-wallet" required></select>
+                </label>
+                <label>Amount
+                    <input id="fund-amount" type="number" min="0.01" step="0.01" value="5000.00" required>
+                </label>
+                <button type="submit">Fund wallet</button>
+            </form>
+            <div id="wallet-list" class="table-list"></div>
+            <div id="fund-result" class="result" role="status"></div>
+        </div>
+
+        <div id="review-panel" class="panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Risk workflow</p>
+                    <h2>Pending fraud reviews</h2>
+                </div>
+                <button id="refresh-reviews" class="ghost" type="button">Refresh</button>
+            </div>
+            <div id="review-list" class="table-list"></div>
+        </div>
+
+        <div id="reconcile-panel" class="panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Ledger workflow</p>
+                    <h2>Wallet reconciliation</h2>
+                </div>
+                <button id="refresh-reconcile" class="ghost" type="button">Run check</button>
+            </div>
+            <div id="reconcile-list" class="table-list"></div>
+        </div>
+    </section>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,117 +1,214 @@
 # Fintech Ledger Monolith
 
-A production-inspired Java 21 Spring Boot backend for wallet payments, double-entry ledger accounting, fraud scoring, audit logging, JWT security, RBAC, idempotency, optimistic locking, and admin review workflows.
+Fintech Ledger is a small full-stack banking-style demo application. It lets you open a browser, sign in as demo users, fund wallets, transfer money, review risky payments, and check that wallet balances match the ledger.
 
-The application intentionally uses a modular monolith architecture focused on transactional consistency and simplicity.
+The project is built as one Spring Boot application: the backend APIs, database access, security, and frontend webpage all run together.
 
-## Why This Project Exists
+![Fintech Ledger app preview](docs/screenshots/ledger-console-preview.svg)
 
-Most portfolio payment projects stop at CRUD. This one focuses on the problems backend engineers actually discuss in fintech interviews:
+## What You Can Do
 
-- money movement correctness
-- immutable ledger thinking
-- idempotent payment APIs
-- transaction boundaries
-- concurrency protection
-- fraud/risk workflow design
-- auditability
-- RBAC-secured operations
-- practical monolith architecture
+- Sign in from the webpage as Admin, Analyst, Alice, or Bob.
+- See wallet balances and wallet IDs.
+- Fund a customer wallet as Admin.
+- Transfer money from one customer wallet to another.
+- Send large transfers into a fraud-review queue.
+- Approve or reject pending payments as Admin or Analyst.
+- Run reconciliation to compare wallet balances with ledger entries.
+- Open the H2 database console and see the stored data.
+- Run backend tests and browser automation tests.
 
 ## Tech Stack
 
 - Java 21
 - Spring Boot 3
 - Maven
-- Spring Web
-- Spring Security
-- JWT authentication
-- RBAC authorization
+- Spring Security with JWT login
 - Spring Data JPA / Hibernate
-- Native SQL queries for reconciliation projections
-- H2 file database for local persistence
+- H2 file database
+- HTML, CSS, and JavaScript frontend served by Spring Boot
 - Swagger / OpenAPI
-- Spring Application Events instead of Kafka
-- ConcurrentHashMap-backed velocity cache instead of Redis
-- Local AI-style fraud explanation service instead of external AI infrastructure
+- JUnit 5 and MockMvc for fast backend tests
+- Selenium, Cucumber, and TestNG for automation testing
 
-## Architecture
+## Requirements
 
-```text
-com.portfolio.fintech
-├── auth        JWT login, filter, user details service
-├── user        onboarding and customer identity
-├── wallet      wallet aggregate with optimistic locking
-├── payment     idempotent transfer workflow
-├── ledger      double-entry append-only ledger model
-├── fraud       velocity scoring and local AI explanation boundary
-├── audit       after-commit audit logging
-├── admin       funding, fraud review, reconciliation APIs
-├── events      Spring domain events
-├── config      security, OpenAPI, seed data
-└── common      shared errors, roles, responses
-```
+Install these before running the project:
 
-The application is a monolith by design. In a real fintech company, this is often the right starting point: strong transactional guarantees, simple local debugging, low operational overhead, and fewer distributed failure modes. Boundaries are still explicit so the fraud, ledger, audit, and payment modules could later be extracted if scale justified it.
+- Java 21
+- Maven
+- Google Chrome, for Selenium UI automation
 
-## Key Engineering Decisions
+No separate frontend setup is needed. There is no `npm install` step.
 
-### H2 Instead Of PostgreSQL
+## Start The Application
 
-H2 is used in file mode so the app persists data between restarts without requiring a local database installation. The JDBC URL enables PostgreSQL compatibility mode to keep SQL habits realistic while staying lightweight.
-
-### Spring Events Instead Of Kafka
-
-Payment completion and fraud-review notifications are published as Spring events after the database transaction commits. This demonstrates event-driven thinking without forcing a local broker onto a laptop.
-
-### ConcurrentHashMap Instead Of Redis
-
-Fraud velocity checks use an in-memory cache. The cache is deliberately simple and local because the project is a monolith. The code comments explain where Redis would fit in a horizontally scaled deployment.
-
-### Local AI Fraud Explanation Layer
-
-The fraud explanation service is a local deterministic service that behaves like the application boundary you would place around Spring AI or another model provider. This keeps the project free of API keys and paid services while demonstrating how AI explanations belong behind a service abstraction.
-
-### Double-Entry Ledger
-
-Every completed transfer writes one debit and one credit ledger entry. Wallet balances are updated for fast reads, but the ledger is the source of audit truth. The reconciliation endpoint compares wallet balance against a native SQL projection from ledger entries.
-
-### Idempotency
-
-`POST /api/payments/transfers` requires an `Idempotency-Key` header. Retrying the same request with the same key returns the original transaction instead of moving money twice.
-
-### Concurrency Protection
-
-Wallets use JPA optimistic locking with `@Version`. Transfer processing loads wallets with `OPTIMISTIC_FORCE_INCREMENT`, so concurrent requests touching the same wallet cannot silently overwrite one another.
-
-## Local Setup In IntelliJ
-
-1. Open IntelliJ IDEA.
-2. Choose **File > Open**.
-3. Select the `fintech-ledger-monolith` folder.
-4. Let IntelliJ import the Maven project.
-5. Use JDK 21.
-6. Run `FintechLedgerApplication`.
-
-The app starts on:
-
-```text
-http://localhost:8081
-```
-
-## Maven Run
+From the project folder, run:
 
 ```bash
 mvn spring-boot:run
 ```
 
-Package:
+Then open:
 
-```bash
-mvn clean package
+```text
+http://localhost:8081
 ```
 
-## Swagger
+Yes, this is now a full-stack application. You interact with the frontend webpage, and the frontend calls the backend APIs. The backend saves data in the local H2 database, so wallet funding, transfers, reviews, ledger entries, and audit logs are stored there.
+
+## Demo Logins
+
+Every demo user has the same password:
+
+```text
+Password@123
+```
+
+| Person | Email | Role | What they can do |
+| --- | --- | --- | --- |
+| Alice | `alice@demo.local` | CUSTOMER | View wallet and transfer money |
+| Bob | `bob@demo.local` | CUSTOMER | View wallet and receive transfers |
+| Fraud Analyst | `analyst@demo.local` | ANALYST | Review risky payments and run reconciliation |
+| Platform Admin | `admin@demo.local` | ADMIN | Fund wallets, review payments, run reconciliation |
+
+The webpage has a demo-user dropdown, so you do not need to type these emails manually in the UI.
+
+## Simple Manual Testing Flow
+
+1. Open `http://localhost:8081`.
+2. Select `Platform Admin` and click `Sign in`.
+3. Click the `Admin` tab.
+4. Pick Alice's wallet and fund it with an amount like `5000.00`.
+5. Select `Alice Customer` from the login dropdown and click `Sign in`.
+6. In the `Transfer` tab, choose Bob's wallet.
+7. Enter an amount like `125.50`.
+8. Click `Submit transfer`.
+9. Select `Platform Admin` again and sign in.
+10. Click `Reconcile` and run the check.
+
+If everything is healthy, the reconciliation rows should show `MATCHED`.
+
+## View The H2 Database
+
+While the app is running, open:
+
+```text
+http://localhost:8081/h2-console
+```
+
+Use these values:
+
+```text
+JDBC URL: jdbc:h2:file:./data/fintech-ledger;MODE=PostgreSQL;DATABASE_TO_UPPER=false;AUTO_SERVER=TRUE
+User: sa
+Password: leave empty
+```
+
+Useful tables to inspect:
+
+- `app_users` contains demo users.
+- `wallets` contains current wallet balances.
+- `payment_transactions` contains transfers and review status.
+- `ledger_entries` contains debit and credit records.
+- `audit_logs` contains business activity history.
+
+If you want a clean database, stop the app and delete the local `data` folder. The app recreates demo users and wallets when it starts again.
+
+## Automation Testing
+
+There are three levels of testing in this project.
+
+### Fast Backend Tests
+
+Run:
+
+```bash
+mvn test
+```
+
+This runs JUnit and MockMvc tests without opening a browser.
+
+### Backend Cucumber + TestNG Automation
+
+Run:
+
+```bash
+mvn verify -Pbackend-automation
+```
+
+This starts a temporary Spring Boot app on `http://127.0.0.1:18081`, runs Cucumber scenarios through TestNG, calls the real backend APIs, and writes reports to:
+
+```text
+target/cucumber-reports/backend.html
+```
+
+### Selenium UI + Cucumber + TestNG Automation
+
+Run:
+
+```bash
+mvn verify -Pui-automation
+```
+
+This starts a temporary Spring Boot app on `http://127.0.0.1:18081`, opens Chrome through Selenium, uses the real webpage, and writes reports to:
+
+```text
+target/cucumber-reports/ui.html
+```
+
+Screenshots from Selenium runs are saved to:
+
+```text
+target/selenium-screenshots
+```
+
+By default Selenium runs in headless mode. To watch Chrome while the tests run:
+
+```bash
+mvn verify -Pui-automation -Dselenium.headless=false
+```
+
+To run both backend and UI Cucumber automation:
+
+```bash
+mvn verify -Pautomation
+```
+
+The automation profiles intentionally do not use the normal app port `8081`.
+That means you can keep the manual application open at `http://localhost:8081`
+while tests run on `18081`.
+
+Automation also uses its own H2 database file:
+
+```text
+./data/fintech-ledger-automation
+```
+
+The regular manual app still uses:
+
+```text
+./data/fintech-ledger
+```
+
+If port `18081` is busy on your machine, choose another test port:
+
+```bash
+mvn verify -Pautomation -Dautomation.server.port=18082
+```
+
+## Cucumber Feature Files
+
+The readable automation scenarios are here:
+
+```text
+src/test/resources/features/backend/ledger_api.feature
+src/test/resources/features/ui/ledger_console.feature
+```
+
+These files describe the behavior in plain English before the Java step definitions automate it.
+
+## Swagger API Page
 
 Open:
 
@@ -119,150 +216,38 @@ Open:
 http://localhost:8081/swagger-ui.html
 ```
 
-Click **Authorize** and paste:
+You can test APIs from Swagger. For secured APIs:
 
-```text
-<jwt-token>
-```
+1. Call `POST /api/auth/login`.
+2. Copy the token from the response.
+3. Click `Authorize`.
+4. Paste only the token value.
 
-Swagger UI adds the `Bearer` prefix automatically. Do not paste `Bearer <token>`
-there, or the request will become `Bearer Bearer <token>`.
+Swagger adds `Bearer` automatically.
 
-## H2 Console
+## Important API Endpoints
 
-Open:
-
-```text
-http://localhost:8081/h2-console
-```
-
-Use:
-
-```text
-JDBC URL: jdbc:h2:file:./data/fintech-ledger;MODE=PostgreSQL;DATABASE_TO_UPPER=false;AUTO_SERVER=TRUE
-User: sa
-Password: <empty>
-```
-
-If you previously ran the app with a different H2 naming setting and see both
-`APP_USERS` and `app_users`, stop the application and delete the local `data/`
-folder. It is only the local file database; the app will recreate clean demo
-tables on the next startup.
-
-## Demo Users
-
-All seeded users use this password:
-
-```text
-Password@123
-```
-
-| Email | Role |
+| Action | Endpoint |
 | --- | --- |
-| alice@demo.local | CUSTOMER |
-| bob@demo.local | CUSTOMER |
-| analyst@demo.local | ANALYST |
-| admin@demo.local | ADMIN |
+| Login | `POST /api/auth/login` |
+| My wallet | `GET /api/wallets/me` |
+| Transfer recipients | `GET /api/wallets/recipients` |
+| Fund wallet | `POST /api/admin/wallets/fund` |
+| Transfer money | `POST /api/payments/transfers` |
+| Pending reviews | `GET /api/admin/reviews` |
+| Approve payment | `POST /api/admin/reviews/{reference}/approve` |
+| Reject payment | `POST /api/admin/reviews/{reference}/reject` |
+| Reconciliation | `GET /api/admin/reconciliation` |
 
-## Postman Testing Flow
+## Why This Project Is Useful
 
-### 1. Login As Admin
+This is not just a CRUD demo. It shows fintech backend ideas in a simple full-stack package:
 
-`POST http://localhost:8081/api/auth/login`
-
-```json
-{
-  "email": "admin@demo.local",
-  "password": "Password@123"
-}
-```
-
-Copy the token.
-
-### 2. Login As Alice
-
-`POST http://localhost:8081/api/auth/login`
-
-```json
-{
-  "email": "alice@demo.local",
-  "password": "Password@123"
-}
-```
-
-### 3. Get Alice Wallet
-
-`GET http://localhost:8081/api/wallets/me`
-
-Use Alice token. Note Alice wallet id.
-
-### 4. Get Bob Wallet
-
-Login as Bob, call `GET /api/wallets/me`, and note Bob wallet id.
-
-### 5. Fund Alice Wallet
-
-`POST http://localhost:8081/api/admin/wallets/fund`
-
-Use Admin token.
-
-```json
-{
-  "walletId": 1,
-  "amount": 5000.00
-}
-```
-
-### 6. Transfer Money From Alice To Bob
-
-`POST http://localhost:8081/api/payments/transfers`
-
-Headers:
-
-```text
-Authorization: Bearer <alice-token>
-Idempotency-Key: demo-transfer-001
-```
-
-Body:
-
-```json
-{
-  "toWalletId": 2,
-  "amount": 125.50,
-  "memo": "Dinner settlement"
-}
-```
-
-Send the same request again with the same idempotency key. The response should return the same transaction reference and should not debit Alice twice.
-
-### 7. Trigger Fraud Review
-
-Use a higher amount, such as:
-
-```json
-{
-  "toWalletId": 2,
-  "amount": 2500.00,
-  "memo": "Large payout"
-}
-```
-
-Depending on velocity and amount, the transaction may become `PENDING_REVIEW`.
-
-### 8. Review Pending Payments
-
-`GET http://localhost:8081/api/admin/reviews`
-
-Use Admin or Analyst token.
-
-### 9. Approve A Payment
-
-`POST http://localhost:8081/api/admin/reviews/{reference}/approve`
-
-### 10. Reconcile Ledger
-
-`GET http://localhost:8081/api/admin/reconciliation`
-
-This compares wallet balances with native SQL ledger projections.
-
+- Wallet balance updates
+- Double-entry ledger records
+- Idempotent transfer requests
+- Fraud scoring and manual review
+- Role-based access control
+- Audit logging
+- Reconciliation between wallet balances and ledger balances
+- Browser automation using Selenium, Cucumber, and TestNG

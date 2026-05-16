@@ -1,0 +1,13 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Full Cucumber Automation">
+    <test name="Backend API scenarios">
+        <classes>
+            <class name="com.portfolio.fintech.automation.BackendCucumberTestNgTest"/>
+        </classes>
+    </test>
+    <test name="Selenium UI scenarios">
+        <classes>
+            <class name="com.portfolio.fintech.automation.UiCucumberTestNgTest"/>
+        </classes>
+    </test>
+</suite>

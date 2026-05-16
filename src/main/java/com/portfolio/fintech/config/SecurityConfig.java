@@ -29,6 +29,7 @@ public class SecurityConfig {
         http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.authenticationProvider(provider);
         http.authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/index.html", "/app.css", "/app.js", "/favicon.ico").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users/onboard").permitAll()
